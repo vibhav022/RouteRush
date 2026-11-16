@@ -43,6 +43,8 @@ export type TransferDetail = {
 }
 
 export type Journey = {
+  connectionViable?: boolean
+  transferCost?: number
   id: string
   origin: string
   destination: string

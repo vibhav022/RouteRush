@@ -44,6 +44,8 @@ type SearchFormProps = {
   initialTo?: string
   initialDate?: string
   initialMode?: ModeValue
+  initialTravellers?: number
+  initialArriveBefore?: string
 }
 
 function isoDate(date: Date) {
@@ -142,15 +144,17 @@ export function SearchForm({
   initialTo = "Delhi · City",
   initialDate,
   initialMode = "all",
+  initialTravellers = 1,
+  initialArriveBefore = "",
 }: SearchFormProps) {
   const router = useRouter()
   const [from, setFrom] = useState(initialFrom)
   const [to, setTo] = useState(initialTo)
   const [date, setDate] = useState(initialDate || tomorrowIso())
-  const [travellers, setTravellers] = useState("1")
+  const [travellers, setTravellers] = useState(String(initialTravellers))
   const [mode, setMode] = useState<ModeValue>(initialMode)
   const [advancedOpen, setAdvancedOpen] = useState(false)
-  const [arriveBefore, setArriveBefore] = useState("")
+  const [arriveBefore, setArriveBefore] = useState(initialArriveBefore)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [swapCount, setSwapCount] = useState(0)
 
@@ -340,7 +344,7 @@ export function SearchForm({
             className="max-w-xs pb-1"
           >
             <label htmlFor="arrive-before" className="mb-2 block text-sm font-semibold text-[#536273]">
-              Arrive before (optional)
+              Arrive before next day (India time, optional)
             </label>
             <input
               id="arrive-before"

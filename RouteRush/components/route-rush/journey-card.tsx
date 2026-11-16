@@ -100,7 +100,7 @@ const riskMeta: Record<
 }
 
 export function isJourneyBookable(journey: Journey) {
-  return journey.segments.every((segment) =>
+  return journey.connectionViable !== false && journey.segments.every((segment) =>
     ["available", "few"].includes(segment.availabilityStatus),
   )
 }
@@ -350,7 +350,7 @@ export function JourneyCard({
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#7B8995]">Total estimated price</p>
             <div className="mt-1 flex items-baseline gap-2">
               <p className="text-2xl font-extrabold tracking-[-0.035em]">{formatPrice(journey.totalPrice)}</p>
-              <span className="text-xs font-medium text-[#7B8995]">for 1 traveller</span>
+              <span className="text-xs font-medium text-[#7B8995]">for the whole group</span>
             </div>
             <p className="mt-1 text-xs font-medium text-[#87949F]">Checked {journey.lastCheckedAt} · Mock data</p>
           </div>
@@ -440,7 +440,7 @@ export function JourneyDetailsSheet({
   onOpenChange: (open: boolean) => void
 }) {
   if (!journey) return null
-  const taxes = Math.round(journey.totalPrice * 0.035)
+  const transferCost = journey.transferCost ?? 0
   const bookable = isJourneyBookable(journey)
 
   return (
@@ -492,11 +492,11 @@ export function JourneyDetailsSheet({
           <section className="mt-5 rounded-[20px] border border-[#DFE5E0] bg-white p-5">
             <h3 className="text-lg font-extrabold">Total journey summary</h3>
             <dl className="mt-4 space-y-3 text-sm">
-              <div className="flex items-center justify-between gap-4"><dt className="text-[#687687]">Ticket fares</dt><dd className="font-bold">{formatPrice(journey.totalPrice)}</dd></div>
-              <div className="flex items-center justify-between gap-4"><dt className="text-[#687687]">Estimated taxes & fees</dt><dd className="font-bold">{formatPrice(taxes)}</dd></div>
+              <div className="flex items-center justify-between gap-4"><dt className="text-[#687687]">Group ticket fares</dt><dd className="font-bold">{formatPrice(journey.totalPrice - transferCost)}</dd></div>
+              <div className="flex items-center justify-between gap-4"><dt className="text-[#687687]">Estimated terminal transfer</dt><dd className="font-bold">{formatPrice(transferCost)}</dd></div>
               <div className="flex items-center justify-between gap-4"><dt className="text-[#687687]">Travel time</dt><dd className="font-bold">{formatDuration(journey.totalDurationMinutes - journey.totalWaitingMinutes)}</dd></div>
               <div className="flex items-center justify-between gap-4"><dt className="text-[#687687]">Waiting time</dt><dd className="font-bold">{formatDuration(journey.totalWaitingMinutes)}</dd></div>
-              <div className="flex items-center justify-between gap-4 border-t border-[#E7ECE8] pt-3"><dt className="font-extrabold">Total estimated cost</dt><dd className="text-xl font-extrabold">{formatPrice(journey.totalPrice + taxes)}</dd></div>
+              <div className="flex items-center justify-between gap-4 border-t border-[#E7ECE8] pt-3"><dt className="font-extrabold">Total estimated cost</dt><dd className="text-xl font-extrabold">{formatPrice(journey.totalPrice)}</dd></div>
             </dl>
           </section>
 
@@ -509,7 +509,7 @@ export function JourneyDetailsSheet({
         <SheetFooter className="border-t border-[#DCE3DE] bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.1em] text-[#718091]">Estimated total</p>
-            <p className="text-xl font-extrabold">{formatPrice(journey.totalPrice + taxes)}</p>
+            <p className="text-xl font-extrabold">{formatPrice(journey.totalPrice)}</p>
           </div>
           <Button
             type="button"
@@ -518,7 +518,7 @@ export function JourneyDetailsSheet({
             onClick={() => toast.info("This prototype will hand off to an official booking platform when live APIs are connected.")}
           >
             <TicketCheck className="size-4" />
-            {bookable ? "Continue to booking" : "Journey not fully available"}
+            {bookable ? "Review simulated tickets" : "Journey not fully available"}
           </Button>
         </SheetFooter>
       </SheetContent>
