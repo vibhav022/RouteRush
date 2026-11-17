@@ -32,6 +32,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     travellers: Math.max(1, Math.min(6, Number(first(params.travellers, "1")) || 1)),
     mode,
     arriveBefore: first(params.arriveBefore, ""),
+    budget: Math.max(0, Number(first(params.budget, "4000")) || 4000),
   }
 
   return <ResultsExperience search={search} />

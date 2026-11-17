@@ -185,7 +185,7 @@ export function FilterPanel({
       </FilterSection>
 
       <FilterSection title="Arrival requirement">
-        <label htmlFor="arrive-before-filter" className="block text-xs font-bold text-[#687687]">Arrive before</label>
+        <label htmlFor="arrive-before-filter" className="block text-xs font-bold text-[#687687]">Arrive before next day (India time)</label>
         <input
           id="arrive-before-filter"
           type="time"
