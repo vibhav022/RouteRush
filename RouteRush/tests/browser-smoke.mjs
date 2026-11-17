@@ -7,13 +7,15 @@ try {
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(
-    process.env.ROUTERUSH_TEST_URL || "http://localhost:3000/planner",
+    process.env.ROUTERUSH_TEST_URL || "http://localhost:3000/",
   );
   await page
-    .getByRole("button", { name: "Find journeys", exact: true })
+    .getByRole("button", { name: "Find available journeys", exact: true })
     .click();
   await page.getByRole("heading", { name: /qualifying journeys/ }).waitFor();
   assert.ok((await page.locator("article").count()) > 0);
+  assert.equal(await page.getByRole("button", {name:"Find journeys",exact:true}).isVisible(),false);
+  await page.getByText("Saved journeys and account",{exact:true}).click();
   await page
     .getByLabel("Email", { exact: true })
     .fill(`browser${Date.now()}@example.com`);
@@ -32,6 +34,7 @@ try {
     .getByRole("button", { name: "Recheck journey", exact: true })
     .waitFor();
   await page.reload();
+  await page.getByText("Saved journeys and account",{exact:true}).click();
   await page
     .getByRole("button", { name: "Recheck journey", exact: true })
     .click();

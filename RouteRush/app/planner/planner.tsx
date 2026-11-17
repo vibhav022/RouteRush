@@ -92,6 +92,16 @@ export default function Planner() {
     [email, setEmail] = useState(""),
     [password, setPassword] = useState("");
   useEffect(() => {
+    let cancelled = false;
+    const query = { ...q, deadline: deadline ? deadline + ":00+05:30" : "" };
+    api("search", query).then(b => {
+      if (!cancelled) { setTrips(b.trips); setSubmitted(b.query); }
+    }).catch(e => { if (!cancelled) setMessage(e.message); });
+    return () => { cancelled = true; };
+    // Search once from the home form's URL; later changes use Modify search.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
     api("locations")
       .then((b) => {
         setLocations(b.locations);
@@ -120,7 +130,7 @@ export default function Planner() {
       setSubmitted(b.query);
       const url = new URLSearchParams();
       Object.entries(query).forEach(([k, v]) => url.set(k, String(v)));
-      window.history.replaceState(null, "", "/planner?" + url);
+      window.history.replaceState(null, "", "/search?" + url);
     } catch (e) {
       setMessage((e as Error).message);
     } finally {
@@ -157,22 +167,15 @@ export default function Planner() {
           <Link href="/" className="text-2xl font-extrabold">
             RouteRush
           </Link>
-          <div className="flex gap-5">
-            <Link href="/admin">Manage schedules</Link>
-            <Link href="/demo">Sample scenario</Link>
-          </div>
+          <Link href="/">New search</Link>
         </nav>
         <header>
-          <h1 className="text-3xl font-bold">Find your way there.</h1>
-          <p className="mt-2">
-            Compare complete journeys, terminal changes and costs for your whole
-            group.
-          </p>
-          <p className="mt-2 text-sm">
-            Schedule coverage: {coverage || "Loading…"}. All times are India
-            time.
-          </p>
+          <h1 className="text-3xl font-bold">{q.from} → {q.to}</h1>
+          <p>{q.date} · {q.travellers} traveller(s) · All times India time</p>
+          <p className="text-sm">{coverage}</p>
         </header>
+        <details className="rounded-xl border bg-white p-4">
+          <summary className="cursor-pointer font-semibold">Modify search</summary>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -293,6 +296,8 @@ export default function Planner() {
             {busy ? "Working…" : "Find journeys"}
           </button>
         </form>
+        </details>
+        {!submitted && !message && <p role="status">Finding journeys…</p>}
         <p role="status" aria-live="polite">
           {message}
         </p>
@@ -471,7 +476,7 @@ export default function Planner() {
             </table>
           </section>
         )}
-        <section className="rounded-2xl border bg-white p-5 space-y-4">
+        <details className="rounded-2xl border bg-white p-5 space-y-4"><summary className="cursor-pointer font-semibold">Saved journeys and account</summary>
           <h2 className="text-xl font-bold">Your saved journeys</h2>
           {user ? (
             <>
@@ -581,7 +586,7 @@ export default function Planner() {
               </button>
             </form>
           )}
-        </section>
+        </details>
         <footer className="text-sm py-5">
           RouteRush · Route discovery and comparison. Ticket purchases happen on
           provider websites.
