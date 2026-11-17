@@ -91,7 +91,7 @@ export default function Home() {
                 <Check className="size-4 text-[#17966B]" /> Transfer risk shown
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Check className="size-4 text-[#17966B]" /> Frontend demo availability
+                <Check className="size-4 text-[#17966B]" /> Source-labelled schedule data
               </span>
             </div>
           </div>

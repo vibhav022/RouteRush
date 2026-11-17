@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
   CalendarDays,
@@ -215,6 +215,7 @@ function SearchSummary({ search }: { search: SearchValues }) {
             </SheetHeader>
             <div className="mx-auto w-full max-w-[1180px] px-4 pb-6 sm:px-6">
               <SearchForm
+                actionPath="/demo"
                 initialFrom={`${search.from} · City`}
                 initialTo={`${search.to} · City`}
                 initialDate={search.date}
@@ -351,7 +352,7 @@ export function ResultsExperience({ search }: { search: SearchValues }) {
       travellers: String(search.travellers),
       mode: search.mode,
     });
-    router.push(`/search?${params.toString()}`);
+    router.push(`/demo?${params.toString()}`);
   }
 
   return (
@@ -376,7 +377,7 @@ export function ResultsExperience({ search }: { search: SearchValues }) {
                 arriveBefore: "09:00",
               });
               router.push(
-                `/search?from=Indore&to=New+Delhi&date=${search.date}&travellers=1&mode=all&arriveBefore=09%3A00&budget=1200`,
+                `/demo?from=Indore&to=New+Delhi&date=${search.date}&travellers=1&mode=all&arriveBefore=09%3A00&budget=1200`,
               );
             }}
           >

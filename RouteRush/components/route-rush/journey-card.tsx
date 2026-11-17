@@ -4,15 +4,12 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import {
   ArrowRight,
-  BadgeIndianRupee,
   BusFront,
-  CalendarDays,
   CheckCircle2,
   ChevronDown,
   CircleHelp,
   Clock3,
   Info,
-  MapPin,
   MoveRight,
   ShieldAlert,
   ShieldCheck,

@@ -1,0 +1,14 @@
+services:
+  routerush:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      ROUTERUSH_ADMIN_TOKEN: ${ROUTERUSH_ADMIN_TOKEN:?Set a random admin token}
+      ROUTERUSH_DB_PATH: /app/storage/routerush.sqlite
+      ROUTERUSH_PUBLIC_ORIGIN: ${ROUTERUSH_PUBLIC_ORIGIN:-http://localhost:3000}
+    volumes:
+      - routerush-data:/app/storage
+    restart: unless-stopped
+volumes:
+  routerush-data:
