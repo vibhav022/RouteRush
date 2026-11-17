@@ -40,6 +40,7 @@ import { citiesAndStations } from "@/data/journeys"
 type ModeValue = "all" | "train" | "bus" | "combined"
 
 type SearchFormProps = {
+  actionPath?: string
   initialFrom?: string
   initialTo?: string
   initialDate?: string
@@ -140,6 +141,7 @@ const travelModes: Array<{
 ]
 
 export function SearchForm({
+  actionPath = "/search",
   initialFrom = "Indore · City",
   initialTo = "Delhi · City",
   initialDate,
@@ -191,7 +193,7 @@ export function SearchForm({
       mode,
     })
     if (arriveBefore) params.set("arriveBefore", arriveBefore)
-    router.push(`/search?${params.toString()}`)
+    router.push(`${actionPath}?${params.toString()}`)
   }
 
   return (

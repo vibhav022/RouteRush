@@ -1,0 +1,8 @@
+node_modules
+.next
+storage
+.env*
+.git
+.sites-runtime
+.wrangler
+dist
