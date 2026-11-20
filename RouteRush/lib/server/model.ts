@@ -1,3 +1,4 @@
+import { stationMatches } from "../stations";
 import { z } from "zod";
 const timestamp = z.string().datetime({ offset: true });
 export const serviceSchema = z
@@ -91,7 +92,7 @@ export function search(
     end = start + 86400000,
     horizon = start + 72 * 3600000;
   const matches = (input: string, terminal: string, city: string) =>
-    [terminal, city].some((s) => s.toLowerCase() === input.toLowerCase());
+    [terminal, city].some((s) => stationMatches(input, s));
   const candidates = services
     .filter(
       (s) =>

@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { FormEvent, useMemo, useState } from "react"
-import { useRouter } from "next/navigation"
-import { motion } from "framer-motion"
+import { FormEvent, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   ArrowRight,
   ArrowUpDown,
@@ -14,9 +14,9 @@ import {
   Search,
   TrainFront,
   Users,
-} from "lucide-react"
+} from "lucide-react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Combobox,
   ComboboxContent,
@@ -26,41 +26,45 @@ import {
   ComboboxItem,
   ComboboxLabel,
   ComboboxList,
-} from "@/components/ui/combobox"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+} from "@/components/ui/combobox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { citiesAndStations } from "@/data/journeys"
+} from "@/components/ui/select";
+import { findStations } from "@/lib/stations";
+import { citiesAndStations } from "@/data/journeys";
 
-type ModeValue = "all" | "train" | "bus" | "combined"
+type ModeValue = "all" | "train" | "bus" | "combined";
 
 type SearchFormProps = {
-  actionPath?: string
-  initialFrom?: string
-  initialTo?: string
-  initialDate?: string
-  initialMode?: ModeValue
-  initialTravellers?: number
-  initialArriveBefore?: string
-}
+  actionPath?: string;
+  initialFrom?: string;
+  initialTo?: string;
+  initialDate?: string;
+  initialMode?: ModeValue;
+  initialTravellers?: number;
+  initialArriveBefore?: string;
+};
 
 function isoDate(date: Date) {
-  return date.toISOString().split("T")[0]
+  return date.toISOString().split("T")[0];
 }
 
 function tomorrowIso() {
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  return isoDate(tomorrow)
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return isoDate(tomorrow);
 }
 
 function normalizeLocation(value: string) {
-  return value.split("·")[0].trim()
+  const parts = value.split("·").map((s) => s.trim());
+  return parts.length > 1 && /^[A-Z0-9-]+$/.test(parts[1])
+    ? parts[1]
+    : parts[0];
 }
 
 function LocationAutocomplete({
@@ -70,25 +74,36 @@ function LocationAutocomplete({
   onChange,
   error,
 }: {
-  id: string
-  label: string
-  value: string
-  onChange: (value: string) => void
-  error?: string
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
 }) {
+  const [query, setQuery] = useState("");
+  const options = [
+    ...new Set([
+      ...citiesAndStations,
+      ...findStations(query).map((s) => `${s.name} · ${s.code}`),
+    ]),
+  ];
   return (
     <div className="min-w-0 flex-1">
-      <label htmlFor={id} className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[#617080]">
+      <label
+        htmlFor={id}
+        className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[#617080]"
+      >
         <MapPin aria-hidden="true" className="size-3.5 text-[#17966B]" />
         {label}
       </label>
       <Combobox
-        items={citiesAndStations}
+        items={options}
         value={value}
         onValueChange={(next) => onChange(next ?? "")}
       >
         <ComboboxInput
           id={id}
+          onChange={(e) => setQuery(e.target.value)}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `${id}-error` : undefined}
           placeholder={`Enter ${label.toLowerCase()}`}
@@ -96,49 +111,66 @@ function LocationAutocomplete({
           showClear
         />
         <ComboboxContent className="z-[70] rounded-2xl border-[#DCE3DE] bg-white p-1 shadow-xl">
-          <ComboboxEmpty>No matching city or station.</ComboboxEmpty>
+          <ComboboxEmpty>No matching station in this directory.</ComboboxEmpty>
           <ComboboxList>
             <ComboboxGroup>
-              <ComboboxLabel>Recent searches</ComboboxLabel>
-              <ComboboxItem value="Indore · City" className="min-h-11 rounded-xl">
+              <ComboboxLabel>Popular cities</ComboboxLabel>
+              <ComboboxItem
+                value="Indore · City"
+                className="min-h-11 rounded-xl"
+              >
                 <Clock3 className="text-[#718091]" /> Indore · City
               </ComboboxItem>
-              <ComboboxItem value="Delhi · City" className="min-h-11 rounded-xl">
+              <ComboboxItem
+                value="Delhi · City"
+                className="min-h-11 rounded-xl"
+              >
                 <Clock3 className="text-[#718091]" /> Delhi · City
               </ComboboxItem>
             </ComboboxGroup>
             <ComboboxGroup>
-              <ComboboxLabel>Cities & stations</ComboboxLabel>
-              {citiesAndStations
-                .filter((item) => !["Indore · City", "Delhi · City"].includes(item))
+              <ComboboxLabel>
+                Cities & railway stations (historical directory)
+              </ComboboxLabel>
+              {options
+                .filter(
+                  (item) => !["Indore · City", "Delhi · City"].includes(item),
+                )
                 .map((item) => (
-                <ComboboxItem key={item} value={item} className="min-h-11 rounded-xl">
-                  <MapPin className="text-[#17966B]" /> {item}
-                </ComboboxItem>
+                  <ComboboxItem
+                    key={item}
+                    value={item}
+                    className="min-h-11 rounded-xl"
+                  >
+                    <MapPin className="text-[#17966B]" /> {item}
+                  </ComboboxItem>
                 ))}
             </ComboboxGroup>
           </ComboboxList>
         </ComboboxContent>
       </Combobox>
       {error ? (
-        <p id={`${id}-error`} className="mt-1.5 text-sm font-medium text-[#C94E4E]">
+        <p
+          id={`${id}-error`}
+          className="mt-1.5 text-sm font-medium text-[#C94E4E]"
+        >
           {error}
         </p>
       ) : null}
     </div>
-  )
+  );
 }
 
 const travelModes: Array<{
-  value: ModeValue
-  label: string
-  icon: typeof TrainFront
+  value: ModeValue;
+  label: string;
+  icon: typeof TrainFront;
 }> = [
   { value: "all", label: "All best routes", icon: Search },
   { value: "train", label: "Train only", icon: TrainFront },
   { value: "bus", label: "Bus only", icon: BusFront },
   { value: "combined", label: "Train + bus", icon: ArrowRight },
-]
+];
 
 export function SearchForm({
   actionPath = "/search",
@@ -149,41 +181,42 @@ export function SearchForm({
   initialTravellers = 1,
   initialArriveBefore = "",
 }: SearchFormProps) {
-  const router = useRouter()
-  const [from, setFrom] = useState(initialFrom)
-  const [to, setTo] = useState(initialTo)
-  const [date, setDate] = useState(initialDate || tomorrowIso())
-  const [travellers, setTravellers] = useState(String(initialTravellers))
-  const [mode, setMode] = useState<ModeValue>(initialMode)
-  const [advancedOpen, setAdvancedOpen] = useState(false)
-  const [arriveBefore, setArriveBefore] = useState(initialArriveBefore)
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [swapCount, setSwapCount] = useState(0)
+  const router = useRouter();
+  const [from, setFrom] = useState(initialFrom);
+  const [to, setTo] = useState(initialTo);
+  const [date, setDate] = useState(initialDate || tomorrowIso());
+  const [travellers, setTravellers] = useState(String(initialTravellers));
+  const [mode, setMode] = useState<ModeValue>(initialMode);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [arriveBefore, setArriveBefore] = useState(initialArriveBefore);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [swapCount, setSwapCount] = useState(0);
 
-  const today = useMemo(() => isoDate(new Date()), [])
+  const today = useMemo(() => isoDate(new Date()), []);
 
   function swapLocations() {
-    setFrom(to)
-    setTo(from)
-    setSwapCount((count) => count + 1)
-    setErrors({})
+    setFrom(to);
+    setTo(from);
+    setSwapCount((count) => count + 1);
+    setErrors({});
   }
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const nextErrors: Record<string, string> = {}
-    const fromCity = normalizeLocation(from)
-    const toCity = normalizeLocation(to)
+    event.preventDefault();
+    const nextErrors: Record<string, string> = {};
+    const fromCity = normalizeLocation(from);
+    const toCity = normalizeLocation(to);
 
-    if (!fromCity) nextErrors.from = "Choose an origin city or station."
-    if (!toCity) nextErrors.to = "Choose a destination city or station."
+    if (!fromCity) nextErrors.from = "Choose an origin city or station.";
+    if (!toCity) nextErrors.to = "Choose a destination city or station.";
     if (fromCity && toCity && fromCity.toLowerCase() === toCity.toLowerCase()) {
-      nextErrors.to = "Destination must be different from your origin."
+      nextErrors.to = "Destination must be different from your origin.";
     }
-    if (!date || date < today) nextErrors.date = "Choose today or a future date."
+    if (!date || date < today)
+      nextErrors.date = "Choose today or a future date.";
 
-    setErrors(nextErrors)
-    if (Object.keys(nextErrors).length) return
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) return;
 
     const params = new URLSearchParams({
       from: fromCity,
@@ -191,9 +224,9 @@ export function SearchForm({
       date,
       travellers,
       mode,
-    })
-    if (arriveBefore) params.set("arriveBefore", arriveBefore)
-    router.push(`${actionPath}?${params.toString()}`)
+    });
+    if (arriveBefore) params.set("arriveBefore", arriveBefore);
+    router.push(`${actionPath}?${params.toString()}`);
   }
 
   return (
@@ -211,8 +244,8 @@ export function SearchForm({
           label="From"
           value={from}
           onChange={(value) => {
-            setFrom(value)
-            setErrors((current) => ({ ...current, from: "" }))
+            setFrom(value);
+            setErrors((current) => ({ ...current, from: "" }));
           }}
           error={errors.from}
         />
@@ -233,15 +266,21 @@ export function SearchForm({
           label="To"
           value={to}
           onChange={(value) => {
-            setTo(value)
-            setErrors((current) => ({ ...current, to: "" }))
+            setTo(value);
+            setErrors((current) => ({ ...current, to: "" }));
           }}
           error={errors.to}
         />
 
         <div className="min-w-0 lg:w-[188px]">
-          <label htmlFor="travel-date" className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[#617080]">
-            <CalendarDays aria-hidden="true" className="size-3.5 text-[#17966B]" />
+          <label
+            htmlFor="travel-date"
+            className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[#617080]"
+          >
+            <CalendarDays
+              aria-hidden="true"
+              className="size-3.5 text-[#17966B]"
+            />
             Travel date
           </label>
           <input
@@ -250,15 +289,18 @@ export function SearchForm({
             min={today}
             value={date}
             onChange={(event) => {
-              setDate(event.target.value)
-              setErrors((current) => ({ ...current, date: "" }))
+              setDate(event.target.value);
+              setErrors((current) => ({ ...current, date: "" }));
             }}
             aria-invalid={Boolean(errors.date)}
             aria-describedby={errors.date ? "travel-date-error" : undefined}
             className="h-12 w-full rounded-xl border border-[#DCE3DE] bg-[#FBFCFA] px-3 text-base text-[#102235] outline-none transition focus:border-[#17966B] focus:ring-3 focus:ring-[#17966B]/15"
           />
           {errors.date ? (
-            <p id="travel-date-error" className="mt-1.5 text-sm font-medium text-[#C94E4E]">
+            <p
+              id="travel-date-error"
+              className="mt-1.5 text-sm font-medium text-[#C94E4E]"
+            >
               {errors.date}
             </p>
           ) : null}
@@ -297,8 +339,8 @@ export function SearchForm({
               className="grid grid-cols-2 gap-2 md:grid-cols-4"
             >
               {travelModes.map((item) => {
-                const Icon = item.icon
-                const active = mode === item.value
+                const Icon = item.icon;
+                const active = mode === item.value;
                 return (
                   <label
                     key={item.value}
@@ -309,11 +351,15 @@ export function SearchForm({
                         : "border-[#DCE3DE] bg-[#FBFCFA] text-[#536273] hover:border-[#AAB9AF]"
                     }`}
                   >
-                    <RadioGroupItem id={`mode-${item.value}`} value={item.value} className="sr-only" />
+                    <RadioGroupItem
+                      id={`mode-${item.value}`}
+                      value={item.value}
+                      className="sr-only"
+                    />
                     <Icon aria-hidden="true" className="size-4 shrink-0" />
                     <span>{item.label}</span>
                   </label>
-                )
+                );
               })}
             </RadioGroup>
           </div>
@@ -337,7 +383,9 @@ export function SearchForm({
           className="flex min-h-11 items-center gap-2 rounded-lg text-sm font-bold text-[#536273] outline-none transition-colors hover:text-[#102235] focus-visible:ring-3 focus-visible:ring-[#17966B]/20"
         >
           Advanced options
-          <ChevronDown className={`size-4 transition-transform ${advancedOpen ? "rotate-180" : ""}`} />
+          <ChevronDown
+            className={`size-4 transition-transform ${advancedOpen ? "rotate-180" : ""}`}
+          />
         </button>
         {advancedOpen ? (
           <motion.div
@@ -345,7 +393,10 @@ export function SearchForm({
             animate={{ opacity: 1, height: "auto" }}
             className="max-w-xs pb-1"
           >
-            <label htmlFor="arrive-before" className="mb-2 block text-sm font-semibold text-[#536273]">
+            <label
+              htmlFor="arrive-before"
+              className="mb-2 block text-sm font-semibold text-[#536273]"
+            >
               Arrive before next day (India time, optional)
             </label>
             <input
@@ -359,5 +410,5 @@ export function SearchForm({
         ) : null}
       </div>
     </form>
-  )
+  );
 }
