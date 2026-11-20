@@ -1,3 +1,4 @@
+import { findStations, stationDirectory } from "../stations";
 import {
   randomBytes,
   randomUUID,
@@ -58,6 +59,14 @@ export async function handle(r: Request): Promise<Response> {
       if (origin && origin !== expectedOrigin)
         return reply({ error: "Cross-origin request rejected" }, 403);
     }
+    if (path === "stations" && method === "GET")
+      return reply({
+        stations: findStations(url.searchParams.get("q") || ""),
+        total: stationDirectory.stations.length,
+        source: stationDirectory.source,
+        sourceDate: stationDirectory.sourceDate,
+        coverage: stationDirectory.coverage,
+      });
     if (path === "locations" && method === "GET") {
       const d = dataset();
       return reply({

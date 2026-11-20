@@ -270,3 +270,17 @@ test('backend journeys retain totals and timing in original result cards', async
  const card=present(trip,q.date);
  assert.equal(card.totalPrice,1000);assert.equal(card.arrivalTime,'07:50');assert.equal(card.arrivalDayOffset,1);assert.equal(card.transferCost,100);assert.equal(card.segments.length,2);assert.equal(card.connectionViable,true);assert.match(card.transfers[0].note,/50 min spare/);
 });
+
+test('nationwide station lookup ranks codes and resolves stored terminal names',async()=>{
+ const {findStations,stationDirectory,stationMatches}=await import('../lib/stations');
+ assert.equal(stationDirectory.stations.length,8989);
+ assert.equal(new Set(stationDirectory.stations.map(s=>s.code)).size,8989);
+ for(const code of ['NDLS','INDB','MAS','HWH','SBC'])assert.equal(findStations(code)[0].code,code);
+ assert.equal(stationMatches('INDB','Indore Junction'),true);
+ assert.equal(stationMatches('NDLS','New Delhi'),true);
+ assert.equal(stationMatches('NDLS','Delhi'),false);
+ assert.equal(findStations('unlikely-does-not-exist').length,0);
+ const q=input(),d=dataset();assert.equal(search({...q,from:'Indore',to:'NDLS'},d.services,d.transfers).find(t=>t.usable)?.total,1000);
+ assert.ok(search({...q,from:'INDB',budget:10000,deadline:''},d.services,d.transfers).every(t=>t.legs[0].mode==='train'));
+ const response=await handle(new Request('http://localhost/api/stations?q=NDLS'));assert.equal((await response.json() as {stations:{code:string}[]}).stations[0].code,'NDLS');
+});

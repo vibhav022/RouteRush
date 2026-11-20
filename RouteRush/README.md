@@ -73,3 +73,7 @@ Docker: set ROUTERUSH_ADMIN_TOKEN in your shell or a local `.env` next to compos
 - [Evaluation and presentation guide](docs/EVALUATION.md)
 
 Remaining production work: authorised live provider feeds, provider-specific freshness policies, password recovery/email verification, automated alerts, larger-corridor load testing and a public HTTPS deployment. Provider links currently open IRCTC / redBus homepages; they are not ticket reservations or itinerary-prefilled links.
+
+## Nationwide station lookup
+
+The original search UI now includes 8,989 distinct railway code/name records from the CC0 DataMeet community directory. This is a historical 2016 snapshot, not a guarantee of complete current station coverage. Type a name or code to see up to 30 matches. Schedule coverage and seat availability remain separate. See [station data provenance and live-data requirements](docs/STATION_DATA.md).
