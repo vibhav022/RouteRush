@@ -167,7 +167,13 @@ function applySort(journeys: Journey[], sort: SortValue) {
   });
 }
 
-function SearchSummary({ search }: { search: SearchValues }) {
+function SearchSummary({
+  search,
+  actionPath,
+}: {
+  search: SearchValues;
+  actionPath: string;
+}) {
   return (
     <div className="sticky top-16 z-30 border-b border-[#DCE3DE] bg-white/95 shadow-[0_8px_24px_rgba(16,34,53,0.05)] backdrop-blur-xl">
       <div className="mx-auto flex max-w-[1240px] items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
@@ -215,7 +221,7 @@ function SearchSummary({ search }: { search: SearchValues }) {
             </SheetHeader>
             <div className="mx-auto w-full max-w-[1180px] px-4 pb-6 sm:px-6">
               <SearchForm
-                actionPath="/demo"
+                actionPath={actionPath}
                 initialFrom={`${search.from} · City`}
                 initialTo={`${search.to} · City`}
                 initialDate={search.date}
@@ -231,11 +237,19 @@ function SearchSummary({ search }: { search: SearchValues }) {
   );
 }
 
-export function ResultsExperience({ search }: { search: SearchValues }) {
+export function ResultsExperience({
+  search,
+  backendJourneys,
+}: {
+  search: SearchValues;
+  backendJourneys?: Journey[];
+}) {
+  const actionPath = backendJourneys ? "/search" : "/demo";
   const router = useRouter();
   const [soldOut, setSoldOut] = useState<string[]>([]);
   const journeys = useMemo(
     () =>
+      backendJourneys ??
       generateJourneys(
         search,
         services.map((s) =>
@@ -244,7 +258,7 @@ export function ResultsExperience({ search }: { search: SearchValues }) {
             : s,
         ),
       ),
-    [search, soldOut],
+    [search, soldOut, backendJourneys],
   );
   const [filters, setFilters] = useState<FilterState>(() => ({
     ...defaultFilters,
@@ -352,70 +366,71 @@ export function ResultsExperience({ search }: { search: SearchValues }) {
       travellers: String(search.travellers),
       mode: search.mode,
     });
-    router.push(`/demo?${params.toString()}`);
+    router.push(`${actionPath}?${params.toString()}`);
   }
 
   return (
     <main className="min-h-screen bg-[#F7F8F4] text-[#102235]">
       <SiteNav />
-      <SearchSummary search={search} />
+      <SearchSummary search={search} actionPath={actionPath} />
 
       <section className="mx-auto max-w-[1240px] px-4 pb-24 pt-7 sm:px-6 sm:pt-10 lg:px-8">
-        <div className="mb-6 rounded-2xl border bg-white p-5 space-y-3">
-          <h2 className="font-bold">Hackathon demo · simulated services</h2>
-          <p>
-            Budget is the total for the whole group, including terminal
-            transfers. Arrival deadline is on the day after departure, in India
-            time.
-          </p>
-          <Button
-            onClick={() => {
-              setSoldOut([]);
-              setFilters({
-                ...defaultFilters,
-                maxPrice: 1200,
-                arriveBefore: "09:00",
-              });
-              router.push(
-                `/demo?from=Indore&to=New+Delhi&date=${search.date}&travellers=1&mode=all&arriveBefore=09%3A00&budget=1200`,
-              );
-            }}
-          >
-            Load judging scenario
-          </Button>
-          <div className="flex flex-wrap gap-3">
-            {["train-A", "train-B"].map((id) => (
-              <label key={id} className="flex min-h-11 items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={soldOut.includes(id)}
-                  onChange={(e) =>
-                    setSoldOut((current) =>
-                      e.target.checked
-                        ? [...current, id]
-                        : current.filter((x) => x !== id),
-                    )
-                  }
-                />
-                Sell out {id}
-              </label>
-            ))}
-            <Button variant="outline" onClick={() => setSoldOut([])}>
-              Reset seats
+        {!backendJourneys && (
+          <div className="mb-6 rounded-2xl border bg-white p-5 space-y-3">
+            <h2 className="font-bold">Hackathon demo · simulated services</h2>
+            <p>
+              Budget is the total for the whole group, including terminal
+              transfers. Arrival deadline is on the day after departure, in
+              India time.
+            </p>
+            <Button
+              onClick={() => {
+                setSoldOut([]);
+                setFilters({
+                  ...defaultFilters,
+                  maxPrice: 1200,
+                  arriveBefore: "09:00",
+                });
+                router.push(
+                  `/demo?from=Indore&to=New+Delhi&date=${search.date}&travellers=1&mode=all&arriveBefore=09%3A00&budget=1200`,
+                );
+              }}
+            >
+              Load judging scenario
             </Button>
+            <div className="flex flex-wrap gap-3">
+              {["train-A", "train-B"].map((id) => (
+                <label key={id} className="flex min-h-11 items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={soldOut.includes(id)}
+                    onChange={(e) =>
+                      setSoldOut((current) =>
+                        e.target.checked
+                          ? [...current, id]
+                          : current.filter((x) => x !== id),
+                      )
+                    }
+                  />
+                  Sell out {id}
+                </label>
+              ))}
+              <Button variant="outline" onClick={() => setSoldOut([])}>
+                Reset seats
+              </Button>
+            </div>
+            <p role="status" aria-live="polite">
+              {bookableCount
+                ? `Recommended: ${results
+                    .find(isJourneyBookable)
+                    ?.segments.map((s) => s.serviceNumber)
+                    .join(
+                      " + ",
+                    )}. ${results.find(isJourneyBookable)?.recommendationReason}`
+                : "No fully available itinerary meets your constraints. Review blocked legs below, try another date or check nearby stations."}
+            </p>
           </div>
-          <p role="status" aria-live="polite">
-            {bookableCount
-              ? `Recommended: ${results
-                  .find(isJourneyBookable)
-                  ?.segments.map((s) => s.serviceNumber)
-                  .join(
-                    " + ",
-                  )}. ${results.find(isJourneyBookable)?.recommendationReason}`
-              : "No fully available itinerary meets your constraints. Review blocked legs below, try another date or check nearby stations."}
-          </p>
-        </div>
-
+        )}
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="flex flex-wrap items-center gap-2">
