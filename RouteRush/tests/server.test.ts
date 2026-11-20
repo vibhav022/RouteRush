@@ -263,3 +263,10 @@ test("dataset validation rejects duplicate IDs and backwards travel", () => {
     false,
   );
 });
+
+test('backend journeys retain totals and timing in original result cards', async()=>{
+ const {present}=await import('../lib/server/presentation');
+ const q=input(),d=dataset();const trip=search(q,d.services,d.transfers).find(t=>t.usable)!;
+ const card=present(trip,q.date);
+ assert.equal(card.totalPrice,1000);assert.equal(card.arrivalTime,'07:50');assert.equal(card.arrivalDayOffset,1);assert.equal(card.transferCost,100);assert.equal(card.segments.length,2);assert.equal(card.connectionViable,true);assert.match(card.transfers[0].note,/50 min spare/);
+});
